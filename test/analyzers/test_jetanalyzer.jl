@@ -394,6 +394,8 @@ end
 
 @testset "UndefKeywordError" begin
     isa2(t) = x -> isa(x, t)
+
+    # simplest case
     let
         m = gen_virtual_module()
         result = Core.eval(m, quote
@@ -409,6 +411,17 @@ end
         # there shouldn't be duplicated report for the `throw` call
         @test !any(isa2(UncaughtExceptionReport), get_reports_with_test(result))
     end
+
+    # splatting
+    let
+        m = gen_virtual_module()
+        result = Core.eval(m, quote
+            foo(a; #= can be undef =# kw) =  a, kw
+            $report_call(() -> foo(3; Dict(:kw=>2)...))
+        end)
+        @test isempty(get_reports_with_test(result))
+    end
+
 end
 
 @testset "DivideError" begin
